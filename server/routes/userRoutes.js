@@ -43,4 +43,35 @@ router.get('/', async (req, res) => {
     }
   });
 
+  router.post('/auth', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+  
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+  
+      const userRef = collection(db, 'users');
+      const q = query(userRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const user = querySnapshot.docs[0].data();
+        
+        // In a real application, use a secure password comparison method
+        // For example: await bcrypt.compare(password, user.hashedPassword)
+        if (user.password === password) {
+          return res.status(200).json({ message: 'Sign-in successful' });
+        } else {
+          return res.status(400).json({ error: 'Incorrect password' });
+        }
+      } else {
+        return res.status(404).json({ error: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Sign-in error:', error);
+      res.status(500).json({ error: 'An error occurred during sign-in', details: error.message });
+    }
+  });
+
 module.exports = router;

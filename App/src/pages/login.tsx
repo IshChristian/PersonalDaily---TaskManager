@@ -1,23 +1,18 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-const Login = () => {
-  const [name, setName] = useState('');
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(''); // Clear any previous errors
 
-    // Prepare the data to be sent to the backend API
-    const loginData = {
-      name,
-      email,
-      password,
-    };
+    const loginData = { email, password };
 
     try {
-      // Send a POST request to the login API endpoint
-      const response = await fetch('http://localhost:8888/users/signin', {
+      const response = await fetch('http://localhost:8888/users/auth?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,17 +22,21 @@ const Login = () => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        // Handle successful login
-        alert('Login successful!');
-        console.log(data);
+      if (response.ok) { // This checks if the status is in the 200-299 range
+        console.log('Login successful:', data);
+        // You might want to store the token or user data here
+        // localStorage.setItem('token', data.token);
+        
+        // Navigate to home page
+        window.location.href = '/';
       } else {
-        // Handle errors
-        alert(data.message || 'Login failed.');
+        // Server returned an error
+        setError(data.message || 'Login failed. Please try again.');
       }
     } catch (error) {
-      alert('An error occurred. Please try again.');
+      // Network error or other unexpected error
       console.error('Error:', error);
+      setError('An error occurred. Please check your network connection and try again.');
     }
   };
 
@@ -53,19 +52,7 @@ const Login = () => {
         </div>
         <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
           <form className="card-body" onSubmit={handleSubmit}>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Name</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter your name"
-                className="input input-bordered"
-                required
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-              />
-            </div>
+            {error && <div className="alert alert-error">{error}</div>}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Email</span>
@@ -76,7 +63,7 @@ const Login = () => {
                 className="input input-bordered"
                 required
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="form-control">
@@ -89,7 +76,7 @@ const Login = () => {
                 className="input input-bordered"
                 required
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
               <label className="label">
                 <a href="#" className="label-text-alt link link-hover">Forgot password?</a>
